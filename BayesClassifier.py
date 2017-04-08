@@ -18,8 +18,10 @@ def loadCSVdata(filename, tag, data_pos, data_neg):
             data_pos.append(rows[i])
 
     
-def predict(data, mean, var):
-    prob = [1, 1]
+def predict(data, mean, var, prior):
+    prob = list(prior)
+    print prob
+    #prob = [1, 1]
     for i in range(0, len(data)):
         prob[0] *= stats.norm.pdf(float(data[i]), mean[0][i], var[0][i])
     
@@ -31,11 +33,11 @@ def predict(data, mean, var):
     else:
         return 1
 
-def calErrorRate(data, mean, var):
+def calErrorRate(data, mean, var, prior):
     error = 0
     for i in range(0, len(data)):
         label = data[i][len(data[i]) - 1] 
-        if int(label) ^ predict(data[i][:len(data[i]) - 1], mean, var):
+        if int(label) ^ predict(data[i][:len(data[i]) - 1], mean, var, prior):
             error += 1
         else:
             continue
@@ -51,9 +53,14 @@ if __name__ == '__main__':
     sigma = []
     test_pos = []
     test_neg = []
+    prior = [0, 0]
+
     error = 0
 
     loadCSVdata(trainfile, tag, data_pos, data_neg)
+    prior[1] = float(len(data_pos)) / (len(data_pos) + len(data_neg))
+    prior[0] = float(len(data_neg)) / (len(data_pos) + len(data_neg))
+
 
     mat_tmp = np.mat(data_pos)
     mat_pos = mat_tmp.astype(float)
@@ -79,8 +86,8 @@ if __name__ == '__main__':
     sigma.append(list_tmp[0])
     
     loadCSVdata(testfile, tag, test_pos, test_neg)
-    error += calErrorRate(test_pos, mean, sigma)
-    error += calErrorRate(test_neg, mean, sigma)
+    error += calErrorRate(test_pos, mean, sigma, prior)
+    error += calErrorRate(test_neg, mean, sigma, prior)
 
     error_rate = float(error) / float(len(test_pos) + len(test_neg))
     print error_rate
